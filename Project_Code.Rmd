@@ -1,0 +1,89 @@
+---
+title: "211_Project"
+author: "Jones"
+date: "2023-04-17"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+# Data Visualization Project
+# My data stored in Xcel file; Study at this address: https://www.bls.gov/charts/american-time-use/activity-by-hldh.htm
+
+# visualize each individual column over the two week course
+ggplot(data=X211Project, aes(x=Date, y=Food))+
+  geom_line(size=1)+
+  scale_x_continuous(breaks=X211Project$Date)+
+  theme(axis.text.x=element_text(angle=45,hjust=1))+
+  geom_point()+
+  ylab("Food Prep & Cleanup by Hour")
+
+ggplot(data=X211Project, aes(x=Date, y=Cleaning))+
+  geom_line(size=1)+
+  scale_x_continuous(breaks=X211Project$Date)+
+  theme(axis.text.x=element_text(angle=45,hjust=1))+
+  geom_point()+
+  ylab("Interior Cleaning by Hour")
+
+ggplot(data=X211Project, aes(x=Date, y=Laundry))+
+  geom_line(size=1)+
+  scale_x_continuous(breaks=X211Project$Date)+
+  theme(axis.text.x=element_text(angle=45,hjust=1))+
+  geom_point()+
+  ylab("Laundry by Hour")
+
+ggplot(data=X211Project, aes(x=Date, y=`House Management`, group=1))+
+  geom_line(size=1)+
+  scale_x_continuous(breaks=X211Project$Date)+
+  theme(axis.text.x=element_text(angle=45,hjust=1))+
+  geom_point()+
+  ylab("House Management by Hour")
+```
+
+```{r}
+# CREATE BAR CHART COMPARING STUDY TO SELF DATA
+
+# 1) create data frame
+studyData<-data.frame(Food=0.42, Cleaning=0.2, Laundry=0.08, Management=0.11, Total=0.81, Source="Study")
+
+projectAverage<- X211Project %>%
+  summarize(Food=mean(Food), Cleaning=mean(Cleaning), Laundry=mean(Laundry), Management=mean(`House Management`), Total=mean(Total)) %>%
+  mutate(Source = "Self") %>%
+  rbind(studyData) %>%
+  gather(key="Chore", value = "Time", "Food", "Cleaning", "Laundry", "Management", "Total")
+
+# 2) create bar chart
+ggplot(data=projectAverage,aes(x=Chore, y=Time, fill=Source))+
+  geom_bar(stat="identity", position="dodge", color="black")+
+  scale_fill_manual("legend", values = c("Self" = "black", "Study" = "blue"))+
+  scale_y_continuous(breaks=c(0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1))
+
+# 3) add in women data from study
+womenData<-data.frame(Source="Women", Chore= c("Food", "Cleaning", "Laundry", "Management", "Total"), Time= c(0.86,0.49,0.27,0.17,1.79))
+projectData<- rbind(projectAverage, womenData)
+projectData["Source"][projectData["Source"]=="Study"] <- "Men"
+
+ggplot(data=projectData,aes(x=Chore, y=Time, fill=Source))+
+  geom_bar(stat="identity", position="dodge", color="black")+
+  scale_fill_manual("legend", values = c("Self" = "black", "Women" = "red", "Men" = "blue"))+
+  scale_y_continuous(breaks=c(0,.2,.4,.6,.8,1,1.2,1.4,1.6,1.8,2))
+
+```
+
+```{r}
+# Hypothesis testing to see if my data is significantly different from the study
+
+# Focus on total time from the data. Test the claim that I spend significantly more time on chores than the average man.
+# H0=0.81; Ha > 0.81
+# One-sample one-tailed t test
+t.test(X211Project$Total, mu=0.81, alternative = "greater")
+# p = 0.04
+
+# Reject H0. There is evidence to support the claim that I spend significantly more time on chores than the average man.
+```
+
